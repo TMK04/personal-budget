@@ -61,4 +61,20 @@ app.post('/:username/envelopes/:category', (req, res) => {
   res.status(201).send(`Allocated ${budget} to ${category}`);
 });
 
+app.delete('/:username/envelopes/:category', (req, res) => {
+  const { username, category } = req.params;
+  if (!(username in username_to_envelopes)) {
+    error404(res, `No envelopes found for ${username}`);
+    return;
+  }
+  const envelopes = username_to_envelopes[username];
+
+  if (!(category in envelopes)) {
+    error404(res, `Category ${category} not found`);
+    return;
+  }
+  delete username_to_envelopes[username][category];
+  res.status(200).send(`Deleted ${category} category`);
+});
+
 app.listen(PORT, () => console.log(`running on port ${PORT}`));

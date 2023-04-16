@@ -8,3 +8,7 @@ content-type: application/json
 ###
 
 GET http://localhost:4000/user2/envelopes HTTP/1.1
+
+###
+
+DELETE  http://localhost:4000/user1/envelopes/food HTTP/1.1
