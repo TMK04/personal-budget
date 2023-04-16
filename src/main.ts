@@ -21,6 +21,12 @@ const username_to_envelopes: Record<Username, Record<Category, Envelope>> = {
 function error404(res: Response, message: string): void {
   res.status(404).send(message);
 }
+function isValidNum(num: unknown): num is number {
+  return typeof num === 'number' && num >= 0;
+}
+function isValidStr(str: unknown): str is string {
+  return typeof str === 'string' && str.length > 0;
+}
 
 /**
  * * Sample url: http://localhost:4000/user1/envelopes
@@ -57,9 +63,28 @@ app.post('/:username/envelopes/transfer', (req, res) => {
     error404(res, `No envelopes found for ${username}`);
     return;
   }
-  const category_to = req.body.category_to;
-  const category_from = req.body.category_from;
-  const transfer_amt = req.body.transfer_amt;
+  const { category_to, category_from, transfer_amt } = req.body;
+  if (!isValidStr(category_to)) {
+    res.status(400).send("Invalid 'category_to'");
+    return;
+  }
+  if (!isValidStr(category_from)) {
+    res.status(400).send("Invalid 'category_from'");
+    return;
+  }
+  if (category_to === category_from) {
+    res
+      .status(400)
+      .send("'category_to' and 'category_from' cannot be the same");
+    return;
+  }
+  if (
+    !isValidNum(transfer_amt) ||
+    transfer_amt > username_to_envelopes[username][category_from]['budget']
+  ) {
+    res.status(400).send("Invalid 'transfer_amt'");
+    return;
+  }
 
   username_to_envelopes[username][category_to]['budget'] -= transfer_amt;
   username_to_envelopes[username][category_from]['budget'] += transfer_amt;
@@ -74,9 +99,12 @@ app.post('/:username/envelopes/:category', (req, res) => {
   const { username, category } = req.params;
   if (!(username in username_to_envelopes)) {
     username_to_envelopes[username] = {};
-    return;
   }
   const { budget } = req.body;
+  if (!isValidNum(budget)) {
+    res.status(400).send("Invalid 'budget'");
+    return;
+  }
   username_to_envelopes[username][category] = { budget, spending: 0 };
   res.status(201).send(`Allocated ${budget} to ${category}`);
 });
@@ -94,10 +122,22 @@ app.patch('/:username/envelopes/:category', (req, res) => {
     return;
   }
   const { budget, spending } = req.body;
-  if (typeof budget === 'number' && budget >= 0)
+  const budget_valid = isValidNum(budget);
+  if (budget_valid) {
     username_to_envelopes[username][category].budget = budget;
-  if (typeof spending === 'number' && spending >= 0)
+  }
+  const spending_valid = isValidNum(spending);
+  if (spending_valid) {
+    if (
+      // If provided budget is invalid, check against current budget
+      (budget_valid && spending > budget) ||
+      spending > username_to_envelopes[username][category].budget
+    ) {
+      res.status(400).send("Invalid 'spending'");
+      return;
+    }
     username_to_envelopes[username][category].spending = spending;
+  }
   res.status(200).send(`Updated category ${category}`);
 });
 
