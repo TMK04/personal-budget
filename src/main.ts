@@ -1,6 +1,7 @@
-import express, { Response } from 'express';
+import express, { Response, json } from 'express';
 
 const app = express();
+app.use(json());
 
 const PORT = process.env.PORT || 4000;
 
@@ -47,6 +48,17 @@ app.get('/:username/envelopes/:category', (req, res) => {
   }
   const envelope = envelopes[category];
   res.json(envelope);
+});
+
+app.post('/:username/envelopes/:category', (req, res) => {
+  const { username, category } = req.params;
+  if (!(username in username_to_envelopes)) {
+    username_to_envelopes[username] = {};
+    return;
+  }
+  const { budget } = req.body;
+  username_to_envelopes[username][category] = { budget };
+  res.status(201).send(`Allocated ${budget} to ${category}`);
 });
 
 app.listen(PORT, () => console.log(`running on port ${PORT}`));
