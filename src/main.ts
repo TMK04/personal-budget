@@ -1,4 +1,4 @@
-import express from 'express';
+import express, { Response } from 'express';
 
 const app = express();
 
@@ -16,33 +16,36 @@ const username_to_envelopes: Record<Username, Record<Category, Envelope>> = {
   },
 };
 
+function error404(res: Response, message: string): void {
+  res.status(404).send(message);
+}
+
 /**
  * * Sample url: http://localhost:4000/user1/envelopes
  */
 app.get('/:username/envelopes', (req, res) => {
-  const username = req.params.username;
-  const envelopes = username_to_envelopes[username];
-  if (!envelopes) {
-    res.status(404).send(`No envelopes found for ${username}`);
+  const { username } = req.params;
+  if (!(username in username_to_envelopes)) {
+    error404(res, `No envelopes found for ${username}`);
     return;
   }
+  const envelopes = username_to_envelopes[username];
   res.json(envelopes);
 });
 
 app.get('/:username/envelopes/:category', (req, res) => {
-  const username = req.params.username;
-  const category = req.params.category;
+  const { username, category } = req.params;
+  if (!(username in username_to_envelopes)) {
+    error404(res, `No envelopes found for ${username}`);
+    return;
+  }
   const envelopes = username_to_envelopes[username];
-  if (!envelopes) {
-    res.status(404).send(`No envelopes found for ${username}`);
-    return;
-  }
 
-  const envelope = envelopes[category];
-  if (!envelope) {
-    res.status(404).send(`Category ${category} not found`);
+  if (!(category in envelopes)) {
+    error404(res, `Category ${category} not found`);
     return;
   }
+  const envelope = envelopes[category];
   res.json(envelope);
 });
 
