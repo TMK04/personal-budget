@@ -22,3 +22,13 @@ content-type: application/json
     "budget": 200,
     "spending": 0
 }
+
+###
+POST http://localhost:4000/user1/envelopes/transfer HTTP/1.1
+content-type: application/json
+
+{
+    "category_to" : "food",
+    "category_from" : "clothes",
+    "transfer_amt": 50
+}

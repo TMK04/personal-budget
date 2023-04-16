@@ -51,6 +51,25 @@ app.get('/:username/envelopes/:category', (req, res) => {
   res.json(envelope);
 });
 
+app.post('/:username/envelopes/transfer', (req, res) => {
+  const { username } = req.params;
+  if (!(username in username_to_envelopes)) {
+    error404(res, `No envelopes found for ${username}`);
+    return;
+  }
+  const category_to = req.body.category_to;
+  const category_from = req.body.category_from;
+  const transfer_amt = req.body.transfer_amt;
+
+  username_to_envelopes[username][category_to]['budget'] -= transfer_amt;
+  username_to_envelopes[username][category_from]['budget'] += transfer_amt;
+  res
+    .status(200)
+    .send(
+      `Transfered $ ${transfer_amt} from ${category_from} to ${category_to}`,
+    );
+});
+
 app.post('/:username/envelopes/:category', (req, res) => {
   const { username, category } = req.params;
   if (!(username in username_to_envelopes)) {
