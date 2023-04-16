@@ -7,13 +7,14 @@ const PORT = process.env.PORT || 4000;
 
 type Envelope = {
   budget: number;
+  spending: number;
 };
 type Category = string;
 type Username = string;
 const username_to_envelopes: Record<Username, Record<Category, Envelope>> = {
   user1: {
-    food: { budget: 200 },
-    clothes: { budget: 100 },
+    food: { budget: 200, spending: 0 },
+    clothes: { budget: 100, spending: 0 },
   },
 };
 
@@ -57,8 +58,28 @@ app.post('/:username/envelopes/:category', (req, res) => {
     return;
   }
   const { budget } = req.body;
-  username_to_envelopes[username][category] = { budget };
+  username_to_envelopes[username][category] = { budget, spending: 0 };
   res.status(201).send(`Allocated ${budget} to ${category}`);
+});
+
+app.patch('/:username/envelopes/:category', (req, res) => {
+  const { username, category } = req.params;
+  if (!(username in username_to_envelopes)) {
+    error404(res, `No envelopes found for ${username}`);
+    return;
+  }
+  const envelopes = username_to_envelopes[username];
+
+  if (!(category in envelopes)) {
+    error404(res, `Category ${category} not found`);
+    return;
+  }
+  const { budget, spending } = req.body;
+  if (typeof budget === 'number' && budget >= 0)
+    username_to_envelopes[username][category].budget = budget;
+  if (typeof spending === 'number' && spending >= 0)
+    username_to_envelopes[username][category].spending = spending;
+  res.status(200).send(`Updated category ${category}`);
 });
 
 app.delete('/:username/envelopes/:category', (req, res) => {

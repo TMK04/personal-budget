@@ -12,3 +12,13 @@ GET http://localhost:4000/user2/envelopes HTTP/1.1
 ###
 
 DELETE  http://localhost:4000/user1/envelopes/food HTTP/1.1
+
+### 
+
+PATCH http://localhost:4000/user2/envelopes/food HTTP/1.1
+content-type: application/json
+
+{
+    "budget": 200,
+    "spending": 0
+}
